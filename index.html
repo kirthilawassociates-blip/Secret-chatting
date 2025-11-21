@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Chat - Encrypt & Decrypt Messages</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo"><i class="fas fa-lock"></i> Secret Chat</h1>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon theme-icon" id="themeIcon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <section class="content-section active">
+                    <div class="section-header">
+                        <h2>Secret Chat</h2>
+                        <p class="subtitle">Enter your message or encrypted code - we'll automatically encrypt or decrypt it</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label for="messageInput">Message</label>
+                        </div>
+                        <div class="textarea-wrapper">
+                            <textarea 
+                                id="messageInput" 
+                                class="text-input" 
+                                placeholder="Type your message or paste encrypted code here..."
+                                rows="8"
+                            ></textarea>
+                            <button class="delete-btn" id="deleteBtn" title="Clear message" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="input-status" id="inputStatus"></div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="processBtn">
+                            <i class="fas fa-key" id="processBtnIcon"></i>
+                            <span id="processBtnText">Process</span>
+                        </button>
+                    </div>
+
+                    <div class="output-group" id="outputGroup" style="display: none;">
+                        <div class="output-header">
+                            <label id="outputLabel">Result</label>
+                            <span class="output-type" id="outputType"></span>
+                        </div>
+                        <div class="output-box">
+                            <button class="copy-btn-inline" id="copyBtn" title="Copy">
+                                <i class="fas fa-copy" id="copyBtnIcon"></i>
+                            </button>
+                            <pre id="outputContent"></pre>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Secure your messages with encryption</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
