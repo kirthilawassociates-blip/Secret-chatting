@@ -23,6 +23,52 @@ function updateThemeIcon(theme) {
     }
 }
 
+// Notification System
+const notificationContainer = document.getElementById('notificationContainer');
+
+function showNotification(message, type = 'info', duration = 4000) {
+    // type can be: 'success', 'error', 'info'
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    // Set icon based on type
+    let iconClass = 'fas fa-info-circle';
+    if (type === 'success') {
+        iconClass = 'fas fa-check-circle';
+    } else if (type === 'error') {
+        iconClass = 'fas fa-exclamation-circle';
+    }
+    
+    notification.innerHTML = `
+        <i class="${iconClass} notification-icon"></i>
+        <div class="notification-content">${message}</div>
+        <button class="notification-close" aria-label="Close">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Add to container
+    notificationContainer.appendChild(notification);
+    
+    // Close button handler
+    const closeBtn = notification.querySelector('.notification-close');
+    const closeNotification = () => {
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    };
+    
+    closeBtn.addEventListener('click', closeNotification);
+    
+    // Auto-remove after duration
+    if (duration > 0) {
+        setTimeout(closeNotification, duration);
+    }
+    
+    return notification;
+}
+
 // Smart Detection: Determine if text is encrypted or plain
 function detectTextType(text) {
     if (!text || !text.trim()) {
@@ -112,7 +158,7 @@ function processMessage() {
     const text = messageInput.value.trim();
     
     if (!text) {
-        alert('Please enter a message or encrypted code');
+        showNotification('Please enter a message or encrypted code', 'error');
         return;
     }
     
@@ -124,7 +170,7 @@ function processMessage() {
         // Decrypt
         result = decryptText(text);
         if (!result) {
-            alert('Failed to decrypt. The code might be invalid or corrupted.');
+            showNotification('Failed to decrypt. The code might be invalid or corrupted.', 'error');
             return;
         }
         resultType = 'decrypted';
@@ -133,11 +179,12 @@ function processMessage() {
         outputType.className = 'output-type decrypted';
         copyBtnIcon.className = 'fas fa-copy';
         copyBtn.title = 'Copy Message';
+        showNotification('Message decrypted successfully!', 'success');
     } else {
         // Encrypt
         result = encryptText(text);
         if (!result) {
-            alert('Failed to encrypt. Please try again.');
+            showNotification('Failed to encrypt. Please try again.', 'error');
             return;
         }
         resultType = 'encrypted';
@@ -146,6 +193,7 @@ function processMessage() {
         outputType.className = 'output-type encrypted';
         copyBtnIcon.className = 'fas fa-copy';
         copyBtn.title = 'Copy Code';
+        showNotification('Message encrypted successfully!', 'success');
     }
     
     // Show result
@@ -161,6 +209,7 @@ function clearMessage() {
     inputStatus.textContent = '';
     inputStatus.className = 'input-status';
     messageInput.focus();
+    showNotification('Message cleared', 'info', 2000);
 }
 
 // Event Listeners
@@ -180,13 +229,14 @@ copyBtn.addEventListener('click', () => {
         const originalIcon = copyBtnIcon.className;
         copyBtnIcon.className = 'fas fa-check';
         copyBtn.title = 'Copied!';
+        showNotification('Copied to clipboard!', 'success', 2000);
         setTimeout(() => {
             copyBtnIcon.className = originalIcon;
             copyBtn.title = 'Copy';
         }, 2000);
     }).catch(err => {
         console.error('Failed to copy:', err);
-        alert('Failed to copy to clipboard');
+        showNotification('Failed to copy to clipboard', 'error');
     });
 });
 
