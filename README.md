@@ -38,9 +38,44 @@ This project is deployed on Vercel and can be accessed at: [Your Vercel URL]
    vercel
    ```
 
-## Local Development
+## Security & Build Process
 
-Simply open `index.html` in your browser or use a local server:
+This project includes advanced code obfuscation and minification to protect sensitive logic and data.
+
+### Building for Production
+
+**Important**: Always use the production build for deployment to protect:
+- Encryption/decryption algorithms
+- Coupon codes
+- Master account numbers
+- UPI payment details
+- All sensitive business logic
+
+```bash
+# Install dependencies
+npm install
+
+# Build production version
+npm run build
+```
+
+This creates a `dist/` directory with:
+- **Obfuscated JavaScript**: All sensitive strings encrypted, variable names mangled
+- **Minified CSS**: Optimized stylesheet
+- **Minified HTML**: Compressed markup
+
+**Security Features Applied:**
+- ✅ Multi-layer string obfuscation (XOR + Base36 encoding)
+- ✅ Variable and function name mangling
+- ✅ Dead code elimination
+- ✅ Control flow flattening
+- ✅ Console statement removal
+- ✅ Multiple compression passes
+- ✅ Sensitive data protection
+
+### Local Development
+
+For development, use the source files directly:
 
 ```bash
 # Using Python
@@ -51,6 +86,8 @@ npx http-server -p 8000
 ```
 
 Then visit `http://localhost:8000`
+
+**Note**: The source files (`script.js`, `styles.css`, `index.html`) are for development only. Never deploy these directly to production.
 
 ## How It Works
 
