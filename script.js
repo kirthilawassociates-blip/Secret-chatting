@@ -31,45 +31,28 @@ function detectTextType(text) {
     
     const trimmed = text.trim();
     
-    // First, try to decrypt - if it succeeds, it's encrypted
-    // This is the most reliable method
+    // ONLY rely on actual decryption success - this is the most reliable method
+    // If decryption succeeds and returns valid text, it's encrypted
+    // Otherwise, it's plain text (even if it contains special characters)
     try {
         const testDecrypt = decryptText(trimmed);
-        if (testDecrypt && testDecrypt.length > 0) {
-            return 'encrypted';
+        if (testDecrypt && testDecrypt.length > 0 && testDecrypt.trim().length > 0) {
+            // Additional validation: decrypted text should be reasonable
+            // Check if it contains mostly readable characters (not just random base36)
+            const readableChars = testDecrypt.match(/[a-zA-Z\s]/g);
+            const readableRatio = readableChars ? readableChars.length / testDecrypt.length : 0;
+            
+            // If decryption succeeds and result is mostly readable, it's encrypted
+            if (readableRatio > 0.3 || testDecrypt.length < 50) {
+                return 'encrypted';
+            }
         }
     } catch (e) {
-        // Decryption failed, continue with pattern detection
+        // Decryption failed - definitely plain text
     }
     
-    // Pattern-based detection as fallback
-    // Encrypted code typically has:
-    // 1. Contains separators like |, :, ;, ~, !, @, #, $
-    // 2. Has base36 encoded numbers at start/end (prefix/suffix lengths)
-    // 3. Contains alphanumeric characters with separators
-    // 4. Has a specific structure: [base36][separator][data][separator][base36]
-    
-    const separators = ['|', ':', ';', '~', '!', '@', '#', '$'];
-    const hasSeparators = separators.some(sep => trimmed.includes(sep));
-    
-    // Check for base36 pattern at start and end
-    const base36Pattern = /^[0-9A-Z]{1,3}[|:;~!@#$]/;
-    const endsWithBase36 = /[|:;~!@#$][0-9A-Z]{1,3}$/;
-    
-    // Check if it has high ratio of alphanumeric to readable text
-    const alphanumericRatio = (trimmed.match(/[0-9A-Za-z]/g) || []).length / trimmed.length;
-    
-    // If it has separators and base36 patterns, likely encrypted
-    if (hasSeparators && (base36Pattern.test(trimmed) || endsWithBase36.test(trimmed))) {
-        return 'encrypted';
-    }
-    
-    // If it has high alphanumeric ratio and separators, might be encrypted
-    if (hasSeparators && alphanumericRatio > 0.7 && trimmed.length > 20) {
-        return 'encrypted';
-    }
-    
-    // Otherwise, assume it's plain text
+    // If we get here, decryption failed or returned invalid result
+    // This means it's plain text (even if it contains :, |, etc.)
     return 'plain';
 }
 
