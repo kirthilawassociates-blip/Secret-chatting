@@ -167,48 +167,99 @@ document.getElementById('closeSecretCodeModal').addEventListener('click', () => 
     });
 });
 
-// Pricing card selection
-document.querySelectorAll('.select-plan').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const card = e.target.closest('.pricing-card');
-        const credits = parseInt(card.dataset.credits);
-        const price = parseInt(card.dataset.price);
+// Pricing card selection - use event delegation
+document.addEventListener('click', (e) => {
+    // Check if clicked element is a select-plan button or inside it
+    const btn = e.target.closest('.select-plan');
+    if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
         
-        pricingModal.style.display = 'none';
-        showPaymentModal(credits, price);
-    });
+        const card = btn.closest('.pricing-card');
+        if (card) {
+            const credits = parseInt(card.dataset.credits);
+            const price = parseInt(card.dataset.price);
+            
+            console.log('Pricing card clicked:', credits, price);
+            
+            if (credits && price && !isNaN(credits) && !isNaN(price)) {
+                pricingModal.style.display = 'none';
+                // Small delay to ensure modal closes before opening payment modal
+                setTimeout(() => {
+                    showPaymentModal(credits, price);
+                }, 100);
+            } else {
+                console.error('Invalid credits or price:', credits, price);
+                showNotification('Invalid pricing data', 'error');
+            }
+        }
+    }
 });
 
 // Show Payment Modal with QR Code
 function showPaymentModal(credits, amount) {
+    console.log('showPaymentModal called with:', credits, amount);
+    
     const paymentAmount = document.getElementById('paymentAmount');
+    if (!paymentAmount) {
+        console.error('Payment amount element not found');
+        showNotification('Payment modal elements not found', 'error');
+        return;
+    }
+    
     paymentAmount.textContent = amount;
     
     const upiId = 'vikibba1805-3@okaxis';
     const payeeName = 'Vikram';
     const upiUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${amount}&cu=INR`;
     
-    // Generate QR Code
-    const qrCanvas = document.getElementById('qrCode');
-    QRCode.toCanvas(qrCanvas, upiUrl, {
-        width: 256,
-        margin: 2,
-        color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-        }
-    }, (error) => {
-        if (error) {
-            console.error('QR Code generation error:', error);
-            showNotification('Failed to generate QR code', 'error');
-        }
-    });
+    console.log('UPI URL:', upiUrl);
     
-    // Store selected plan data
+    // Store selected plan data first
     paymentModal.dataset.credits = credits;
     paymentModal.dataset.amount = amount;
     
+    // Show modal first
     paymentModal.style.display = 'flex';
+    
+    // Wait for modal to be visible, then generate QR code
+    setTimeout(() => {
+        // Generate QR Code
+        const qrCanvas = document.getElementById('qrCode');
+        if (!qrCanvas) {
+            console.error('QR canvas element not found');
+            showNotification('QR code element not found', 'error');
+            return;
+        }
+        
+        // Check if QRCode library is loaded
+        if (typeof QRCode === 'undefined') {
+            console.error('QRCode library not loaded');
+            showNotification('QR code library not loaded. Please refresh the page.', 'error');
+            // Show UPI ID as fallback
+            return;
+        }
+        
+        // Clear canvas first
+        const ctx = qrCanvas.getContext('2d');
+        ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+        
+        QRCode.toCanvas(qrCanvas, upiUrl, {
+            width: 256,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        }, (error) => {
+            if (error) {
+                console.error('QR Code generation error:', error);
+                showNotification('Failed to generate QR code: ' + error.message, 'error');
+            } else {
+                console.log('QR code generated successfully');
+            }
+        });
+    }, 100);
 }
 
 // Payment Done Handler
