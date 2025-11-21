@@ -131,11 +131,40 @@ const paymentModal = document.getElementById('paymentModal');
 const authModal = document.getElementById('authModal');
 const secretCodeModal = document.getElementById('secretCodeModal');
 
+// Logout function
+function logout() {
+    localStorage.removeItem('proUser');
+    updateCreditsDisplay();
+    showNotification('You have been logged out successfully', 'success');
+    // Hide secret code option if visible
+    const secretCodeOption = document.getElementById('secretCodeOption');
+    if (secretCodeOption) {
+        secretCodeOption.style.display = 'none';
+    }
+    // Clear any secret code input
+    const secretCodeField = document.getElementById('secretCodeField');
+    if (secretCodeField) {
+        secretCodeField.value = '';
+    }
+    const useSecretCode = document.getElementById('useSecretCode');
+    if (useSecretCode) {
+        useSecretCode.checked = false;
+    }
+    const secretCodeInput = document.getElementById('secretCodeInput');
+    if (secretCodeInput) {
+        secretCodeInput.style.display = 'none';
+    }
+}
+
 proBtn.addEventListener('click', () => {
     if (isProUser()) {
-        // Show account info or credits
+        // Show account info with logout option
         const credits = getCredits();
-        showNotification(`You have ${credits} credits remaining`, 'info');
+        const user = getUserData();
+        const shouldLogout = confirm(`Account Information:\n\nMobile: ${user.mobile}\nCredits: ${credits}\n\nDo you want to log out?`);
+        if (shouldLogout) {
+            logout();
+        }
     } else {
         pricingModal.style.display = 'flex';
     }
@@ -222,44 +251,70 @@ function showPaymentModal(credits, amount) {
     // Show modal first
     paymentModal.style.display = 'flex';
     
-    // Wait for modal to be visible, then generate QR code
-    setTimeout(() => {
-        // Generate QR Code
+    // Wait for modal to be visible and library to be ready
+    let retryCount = 0;
+    const maxRetries = 15;
+    
+    const generateQR = () => {
         const qrCanvas = document.getElementById('qrCode');
         if (!qrCanvas) {
             console.error('QR canvas element not found');
-            showNotification('QR code element not found', 'error');
             return;
         }
         
         // Check if QRCode library is loaded
         if (typeof QRCode === 'undefined') {
-            console.error('QRCode library not loaded');
-            showNotification('QR code library not loaded. Please refresh the page.', 'error');
-            // Show UPI ID as fallback
+            retryCount++;
+            if (retryCount < maxRetries) {
+                console.log(`QRCode library not loaded yet, retrying... (${retryCount}/${maxRetries})`);
+                setTimeout(generateQR, 200);
+                return;
+            } else {
+                console.error('QRCode library failed to load after multiple retries');
+                showNotification('QR code library not loaded. Please refresh the page.', 'error');
+                return;
+            }
+        }
+        
+        // Check if toCanvas method exists
+        if (typeof QRCode.toCanvas !== 'function') {
+            console.error('QRCode.toCanvas is not a function. Available methods:', Object.keys(QRCode));
+            showNotification('QR code library version mismatch. Please refresh the page.', 'error');
             return;
         }
         
-        // Clear canvas first
+        // Clear canvas
         const ctx = qrCanvas.getContext('2d');
         ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
         
-        QRCode.toCanvas(qrCanvas, upiUrl, {
-            width: 256,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-            }
-        }, (error) => {
-            if (error) {
-                console.error('QR Code generation error:', error);
-                showNotification('Failed to generate QR code: ' + error.message, 'error');
-            } else {
-                console.log('QR code generated successfully');
-            }
-        });
-    }, 100);
+        // Generate QR Code
+        try {
+            console.log('Generating QR code with URL:', upiUrl);
+            // Use QRCode library - standard API
+            QRCode.toCanvas(qrCanvas, upiUrl, {
+                width: 256,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                },
+                errorCorrectionLevel: 'M'
+            }, (error) => {
+                if (error) {
+                    console.error('QR Code generation error:', error);
+                    showNotification('Failed to generate QR code. Please use the UPI ID below.', 'error');
+                } else {
+                    console.log('QR code generated successfully');
+                }
+            });
+        } catch (error) {
+            console.error('QR Code generation exception:', error);
+            showNotification('Failed to generate QR code. Please use the UPI ID below.', 'error');
+        }
+    };
+    
+    // Start generation after modal is visible
+    setTimeout(generateQR, 500);
 }
 
 // Payment Done Handler

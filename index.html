@@ -6,7 +6,6 @@
     <title>Secret Chat - Encrypt & Decrypt Messages</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -113,7 +112,7 @@
                             <h3>1 Credit</h3>
                             <div class="price">₹45</div>
                         </div>
-                        <button class="btn btn-primary select-plan">Select</button>
+                        <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
                     <div class="pricing-card" data-credits="10" data-price="400">
                         <div class="pricing-header">
@@ -121,7 +120,7 @@
                             <div class="price">₹400</div>
                             <div class="savings">Save ₹50</div>
                         </div>
-                        <button class="btn btn-primary select-plan">Select</button>
+                        <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
                     <div class="pricing-card featured" data-credits="50" data-price="2000">
                         <div class="pricing-badge">Popular</div>
@@ -130,7 +129,7 @@
                             <div class="price">₹2000</div>
                             <div class="savings">Save ₹250</div>
                         </div>
-                        <button class="btn btn-primary select-plan">Select</button>
+                        <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
                     <div class="pricing-card" data-credits="100" data-price="4000">
                         <div class="pricing-header">
@@ -138,7 +137,7 @@
                             <div class="price">₹4000</div>
                             <div class="savings">Save ₹500</div>
                         </div>
-                        <button class="btn btn-primary select-plan">Select</button>
+                        <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
                 </div>
             </div>
@@ -169,7 +168,8 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" id="paymentDoneBtn">
-                        <i class="fas fa-check"></i> Payment Completed
+                        <i class="fas fa-check"></i>
+                        <span>Payment Completed</span>
                     </button>
                 </div>
             </div>
@@ -193,7 +193,8 @@
                         <input type="tel" id="mobileInput" class="text-input" placeholder="Enter 10-digit mobile number" maxlength="10">
                     </div>
                     <button class="btn btn-primary" id="submitAuthBtn">
-                        <i class="fas fa-arrow-right"></i> Continue
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Continue</span>
                     </button>
                 </div>
             </div>
@@ -217,13 +218,15 @@
                         <input type="text" id="decryptSecretCode" class="text-input" placeholder="Enter secret code">
                     </div>
                     <button class="btn btn-primary" id="submitSecretCodeBtn">
-                        <i class="fas fa-unlock"></i> Decrypt
+                        <i class="fas fa-unlock"></i>
+                        <span>Decrypt</span>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
