@@ -69,6 +69,232 @@ function showNotification(message, type = 'info', duration = 4000) {
     return notification;
 }
 
+// ==================== PRO FEATURES ====================
+
+// User Management (using localStorage)
+function getUserData() {
+    const userData = localStorage.getItem('secretChatUser');
+    return userData ? JSON.parse(userData) : null;
+}
+
+function saveUserData(userData) {
+    localStorage.setItem('secretChatUser', JSON.stringify(userData));
+}
+
+function getCredits() {
+    const user = getUserData();
+    return user ? user.credits : 0;
+}
+
+function deductCredit() {
+    const user = getUserData();
+    if (user && user.credits > 0) {
+        user.credits--;
+        saveUserData(user);
+        updateCreditsDisplay();
+        return true;
+    }
+    return false;
+}
+
+function addCredits(amount) {
+    const user = getUserData();
+    if (user) {
+        user.credits += amount;
+        saveUserData(user);
+        updateCreditsDisplay();
+    }
+}
+
+function isProUser() {
+    const user = getUserData();
+    return user !== null;
+}
+
+function updateCreditsDisplay() {
+    const creditsDisplay = document.getElementById('creditsDisplay');
+    const creditsCount = document.getElementById('creditsCount');
+    const user = getUserData();
+    
+    if (user) {
+        creditsDisplay.style.display = 'flex';
+        creditsCount.textContent = user.credits;
+    } else {
+        creditsDisplay.style.display = 'none';
+    }
+}
+
+// Pro Button Handler
+const proBtn = document.getElementById('proBtn');
+const pricingModal = document.getElementById('pricingModal');
+const paymentModal = document.getElementById('paymentModal');
+const authModal = document.getElementById('authModal');
+const secretCodeModal = document.getElementById('secretCodeModal');
+
+proBtn.addEventListener('click', () => {
+    if (isProUser()) {
+        // Show account info or credits
+        const credits = getCredits();
+        showNotification(`You have ${credits} credits remaining`, 'info');
+    } else {
+        pricingModal.style.display = 'flex';
+    }
+});
+
+// Close modals
+document.getElementById('closePricingModal').addEventListener('click', () => {
+    pricingModal.style.display = 'none';
+});
+
+document.getElementById('closePaymentModal').addEventListener('click', () => {
+    paymentModal.style.display = 'none';
+});
+
+document.getElementById('closeAuthModal').addEventListener('click', () => {
+    authModal.style.display = 'none';
+});
+
+document.getElementById('closeSecretCodeModal').addEventListener('click', () => {
+    secretCodeModal.style.display = 'none';
+});
+
+// Close modals on outside click
+[pricingModal, paymentModal, authModal, secretCodeModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+
+// Pricing card selection
+document.querySelectorAll('.select-plan').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.pricing-card');
+        const credits = parseInt(card.dataset.credits);
+        const price = parseInt(card.dataset.price);
+        
+        pricingModal.style.display = 'none';
+        showPaymentModal(credits, price);
+    });
+});
+
+// Show Payment Modal with QR Code
+function showPaymentModal(credits, amount) {
+    const paymentAmount = document.getElementById('paymentAmount');
+    paymentAmount.textContent = amount;
+    
+    const upiId = 'vikibba1805-3@okaxis';
+    const payeeName = 'Vikram';
+    const upiUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${amount}&cu=INR`;
+    
+    // Generate QR Code
+    const qrCanvas = document.getElementById('qrCode');
+    QRCode.toCanvas(qrCanvas, upiUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+        }
+    }, (error) => {
+        if (error) {
+            console.error('QR Code generation error:', error);
+            showNotification('Failed to generate QR code', 'error');
+        }
+    });
+    
+    // Store selected plan data
+    paymentModal.dataset.credits = credits;
+    paymentModal.dataset.amount = amount;
+    
+    paymentModal.style.display = 'flex';
+}
+
+// Payment Done Handler
+document.getElementById('paymentDoneBtn').addEventListener('click', () => {
+    paymentModal.style.display = 'none';
+    showAuthModal();
+});
+
+// Show Auth Modal
+function showAuthModal() {
+    const authModalTitle = document.getElementById('authModalTitle');
+    const authDescription = document.getElementById('authDescription');
+    
+    if (isProUser()) {
+        authModalTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        authDescription.textContent = 'Enter your mobile number to access your Pro account';
+    } else {
+        authModalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
+        authDescription.textContent = 'Enter your mobile number to create your Pro account';
+    }
+    
+    authModal.style.display = 'flex';
+}
+
+// Submit Auth
+document.getElementById('submitAuthBtn').addEventListener('click', () => {
+    const mobileInput = document.getElementById('mobileInput');
+    const mobile = mobileInput.value.trim();
+    
+    if (!mobile || mobile.length !== 10 || !/^\d+$/.test(mobile)) {
+        showNotification('Please enter a valid 10-digit mobile number', 'error');
+        return;
+    }
+    
+    const user = getUserData();
+    const credits = parseInt(paymentModal.dataset.credits) || 0;
+    
+    if (user && user.mobile === mobile) {
+        // Existing user - add credits
+        addCredits(credits);
+        showNotification(`Welcome back! ${credits} credits added to your account`, 'success');
+    } else {
+        // New user - create account
+        const newUser = {
+            mobile: mobile,
+            credits: credits,
+            createdAt: new Date().toISOString()
+        };
+        saveUserData(newUser);
+        showNotification(`Account created! ${credits} credits added`, 'success');
+    }
+    
+    authModal.style.display = 'none';
+    mobileInput.value = '';
+    updateCreditsDisplay();
+    
+    // Show secret code option if user has credits
+    if (getCredits() > 0) {
+        document.getElementById('secretCodeOption').style.display = 'block';
+    }
+});
+
+// Secret Code Option Toggle
+const useSecretCodeCheckbox = document.getElementById('useSecretCode');
+const secretCodeInput = document.getElementById('secretCodeInput');
+const secretCodeField = document.getElementById('secretCodeField');
+
+useSecretCodeCheckbox.addEventListener('change', (e) => {
+    if (e.target.checked) {
+        if (!isProUser() || getCredits() === 0) {
+            e.target.checked = false;
+            showNotification('Pro account required. Please upgrade to use secret code encryption.', 'error');
+            pricingModal.style.display = 'flex';
+            return;
+        }
+        secretCodeInput.style.display = 'block';
+        secretCodeField.focus();
+    } else {
+        secretCodeInput.style.display = 'none';
+        secretCodeField.value = '';
+    }
+});
+
+// Initialize credits display on load
+updateCreditsDisplay();
+
 // Smart Detection: Determine if text is encrypted or plain
 function detectTextType(text) {
     if (!text || !text.trim()) {
@@ -82,7 +308,13 @@ function detectTextType(text) {
     // Otherwise, it's plain text (even if it contains special characters)
     try {
         const testDecrypt = decryptText(trimmed);
-        if (testDecrypt && testDecrypt.length > 0 && testDecrypt.trim().length > 0) {
+        
+        // Check if secret code is required (returns object with requiresSecretCode flag)
+        if (testDecrypt && typeof testDecrypt === 'object' && testDecrypt.requiresSecretCode) {
+            return 'encrypted'; // It's encrypted but requires secret code
+        }
+        
+        if (testDecrypt && typeof testDecrypt === 'string' && testDecrypt.length > 0 && testDecrypt.trim().length > 0) {
             // Additional validation: decrypted text should be reasonable
             // Check if it contains mostly readable characters (not just random base36)
             const readableChars = testDecrypt.match(/[a-zA-Z\s]/g);
@@ -132,6 +364,20 @@ function updateUI() {
     // Show delete button
     deleteBtn.style.display = 'flex';
     
+    // Show secret code option for Pro users
+    if (isProUser() && getCredits() > 0) {
+        const textType = detectTextType(text);
+        if (textType === 'plain') {
+            document.getElementById('secretCodeOption').style.display = 'block';
+        } else {
+            document.getElementById('secretCodeOption').style.display = 'none';
+            useSecretCodeCheckbox.checked = false;
+            secretCodeInput.style.display = 'none';
+        }
+    } else {
+        document.getElementById('secretCodeOption').style.display = 'none';
+    }
+    
     // Detect text type
     const textType = detectTextType(text);
     
@@ -169,6 +415,14 @@ function processMessage() {
     if (textType === 'encrypted') {
         // Decrypt
         result = decryptText(text);
+        
+        // Check if secret code is required
+        if (result && typeof result === 'object' && result.requiresSecretCode) {
+            secretCodeModal.style.display = 'flex';
+            secretCodeModal.dataset.encryptedCode = text;
+            return;
+        }
+        
         if (!result) {
             showNotification('Failed to decrypt. The code might be invalid or corrupted.', 'error');
             return;
@@ -182,8 +436,36 @@ function processMessage() {
         showNotification('Message decrypted successfully!', 'success');
     } else {
         // Encrypt
-        result = encryptText(text);
+        const useSecretCode = useSecretCodeCheckbox.checked;
+        const secretCode = useSecretCode ? secretCodeField.value.trim() : null;
+        
+        if (useSecretCode && (!secretCode || secretCode.length === 0)) {
+            showNotification('Please enter a secret code', 'error');
+            return;
+        }
+        
+        if (useSecretCode) {
+            // Check credits
+            if (!isProUser() || getCredits() === 0) {
+                showNotification('Pro account required. Please upgrade to use secret code encryption.', 'error');
+                pricingModal.style.display = 'flex';
+                return;
+            }
+            
+            // Deduct credit
+            if (!deductCredit()) {
+                showNotification('Insufficient credits. Please purchase more credits.', 'error');
+                pricingModal.style.display = 'flex';
+                return;
+            }
+        }
+        
+        result = encryptText(text, secretCode);
         if (!result) {
+            if (useSecretCode) {
+                // Refund credit if encryption failed
+                addCredits(1);
+            }
             showNotification('Failed to encrypt. Please try again.', 'error');
             return;
         }
@@ -193,13 +475,53 @@ function processMessage() {
         outputType.className = 'output-type encrypted';
         copyBtnIcon.className = 'fas fa-copy';
         copyBtn.title = 'Copy Code';
-        showNotification('Message encrypted successfully!', 'success');
+        
+        if (useSecretCode) {
+            showNotification('Message encrypted with secret code! Credit used.', 'success');
+            // Reset secret code option
+            useSecretCodeCheckbox.checked = false;
+            secretCodeInput.style.display = 'none';
+            secretCodeField.value = '';
+        } else {
+            showNotification('Message encrypted successfully!', 'success');
+        }
     }
     
     // Show result
     outputContent.textContent = result;
     outputGroup.style.display = 'block';
 }
+
+// Secret Code Decryption Handler
+document.getElementById('submitSecretCodeBtn').addEventListener('click', () => {
+    const secretCode = document.getElementById('decryptSecretCode').value.trim();
+    const encryptedCode = secretCodeModal.dataset.encryptedCode;
+    
+    if (!secretCode) {
+        showNotification('Please enter the secret code', 'error');
+        return;
+    }
+    
+    const result = decryptText(encryptedCode, secretCode);
+    
+    if (!result) {
+        showNotification('Invalid secret code or corrupted message', 'error');
+        return;
+    }
+    
+    secretCodeModal.style.display = 'none';
+    document.getElementById('decryptSecretCode').value = '';
+    
+    // Show decrypted result
+    outputContent.textContent = result;
+    outputLabel.textContent = 'Decrypted Message';
+    outputType.textContent = 'Decrypted';
+    outputType.className = 'output-type decrypted';
+    copyBtnIcon.className = 'fas fa-copy';
+    copyBtn.title = 'Copy Message';
+    outputGroup.style.display = 'block';
+    showNotification('Message decrypted successfully!', 'success');
+});
 
 // Delete/Clear function
 function clearMessage() {
@@ -461,7 +783,7 @@ function removeObfuscation(str) {
 }
 
 // Main Encryption Function
-function encryptText(text) {
+function encryptText(text, secretCode = null) {
     if (!text.trim()) {
         return null;
     }
@@ -471,7 +793,12 @@ function encryptText(text) {
         const key = generateEncryptionKey(Math.floor(Math.random() * 10) + 12); // 12-22 chars
         
         // Step 2: Convert text to code array (handles Unicode, emojis, etc.)
-        const textCodes = stringToCodeArray(text);
+        let textCodes = stringToCodeArray(text);
+        
+        // Step 2.5: If secret code is provided, encrypt with it first
+        if (secretCode && secretCode.trim()) {
+            textCodes = xorEncrypt(textCodes, secretCode.trim());
+        }
         
         // Step 3: Encrypt using XOR with the random key
         const encryptedCodes = xorEncrypt(textCodes, key);
@@ -489,11 +816,13 @@ function encryptText(text) {
         const obfuscatedData = addObfuscation(dataStr);
         
         // Step 6: Embed the key (key length, checksum, obfuscated data, key)
+        // Add flag: 'S' for secret code, 'N' for normal
+        const secretFlag = secretCode && secretCode.trim() ? 'S' : 'N';
         const keyChecksum = key.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
         const keyLength = key.length;
         const keyLenEncoded = encodeNumber(keyLength).padStart(2, '0');
         const checksumEncoded = encodeNumber(keyChecksum).padStart(3, '0');
-        const embedded = `${keyLenEncoded}${checksumEncoded}${obfuscatedData}${key}`;
+        const embedded = `${secretFlag}${keyLenEncoded}${checksumEncoded}${obfuscatedData}${key}`;
         
         // Step 7: Add random padding
         const prefixPadding = generateRandomChars(Math.floor(Math.random() * 5) + 4);
@@ -519,7 +848,7 @@ function encryptText(text) {
 }
 
 // Main Decryption Function
-function decryptText(encryptedCode) {
+function decryptText(encryptedCode, secretCode = null) {
     if (!encryptedCode.trim()) {
         return null;
     }
@@ -567,9 +896,19 @@ function decryptText(encryptedCode) {
         // Step 3: Remove padding
         const withoutPadding = mainData.substring(prefixLen, mainData.length - suffixLen);
         
-        // Step 4: Extract key length (first 2 alphanumeric chars)
+        // Step 4: Extract secret flag (first char: 'S' or 'N')
+        const secretFlag = withoutPadding[0];
+        const hasSecretCode = secretFlag === 'S';
+        
+        // If secret code is required but not provided, return special flag
+        if (hasSecretCode && !secretCode) {
+            return { requiresSecretCode: true };
+        }
+        
+        // Step 5: Extract key length (next 2 alphanumeric chars after flag)
         let keyLenStr = '';
-        for (let k = 0; k < withoutPadding.length && keyLenStr.length < 2; k++) {
+        let alphanumericCount = 0;
+        for (let k = 1; k < withoutPadding.length && keyLenStr.length < 2; k++) {
             if (/[0-9A-Z]/.test(withoutPadding[k])) {
                 keyLenStr += withoutPadding[k];
             }
@@ -581,13 +920,13 @@ function decryptText(encryptedCode) {
         
         const keyLength = decodeNumber(keyLenStr);
         
-        // Step 5: Extract checksum (next 3 alphanumeric chars)
+        // Step 6: Extract checksum (next 3 alphanumeric chars after keyLen)
         let checksumStr = '';
-        let alphanumericCount = 0;
-        for (let k = 0; k < withoutPadding.length && checksumStr.length < 3; k++) {
+        alphanumericCount = 0;
+        for (let k = 1; k < withoutPadding.length && checksumStr.length < 3; k++) {
             if (/[0-9A-Z]/.test(withoutPadding[k])) {
                 alphanumericCount++;
-                if (alphanumericCount > 2) { // After keyLen
+                if (alphanumericCount > 2) { // After flag (1) + keyLen (2)
                     checksumStr += withoutPadding[k];
                 }
             }
@@ -597,7 +936,7 @@ function decryptText(encryptedCode) {
             throw new Error('Invalid format');
         }
         
-        // Step 6: Extract key from the end (key is at the very end, no obfuscation)
+        // Step 7: Extract key from the end (key is at the very end, no obfuscation)
         const key = withoutPadding.substring(withoutPadding.length - keyLength);
         
         // Verify checksum
@@ -607,15 +946,15 @@ function decryptText(encryptedCode) {
             throw new Error('Invalid key checksum');
         }
         
-        // Step 7: Extract data part (between checksum and key)
-        // Format: [keyLen(2)][checksum(3)][data with obfuscation][key]
-        // Find where data starts (after 5 alphanumeric chars: 2 for keyLen + 3 for checksum)
+        // Step 8: Extract data part (between checksum and key)
+        // Format: [flag(1)][keyLen(2)][checksum(3)][data with obfuscation][key]
+        // Find where data starts (after 6 chars: 1 flag + 2 keyLen + 3 checksum)
         let dataStartIndex = 0;
         alphanumericCount = 0;
         for (let k = 0; k < withoutPadding.length; k++) {
             if (/[0-9A-Z]/.test(withoutPadding[k])) {
                 alphanumericCount++;
-                if (alphanumericCount === 5) {
+                if (alphanumericCount === 6) { // flag + keyLen + checksum
                     dataStartIndex = k + 1;
                     break;
                 }
@@ -624,10 +963,10 @@ function decryptText(encryptedCode) {
         
         const dataPart = withoutPadding.substring(dataStartIndex, withoutPadding.length - keyLength);
         
-        // Step 8: Remove obfuscation from data part only
+        // Step 9: Remove obfuscation from data part only
         const cleaned = removeObfuscation(dataPart);
         
-        // Step 9: Convert cleaned data back to number array
+        // Step 10: Convert cleaned data back to number array
         // Parse fixed-width base36 numbers (5 characters each)
         const FIXED_WIDTH = 5;
         const encryptedData = [];
@@ -649,10 +988,15 @@ function decryptText(encryptedCode) {
             }
         }
         
-        // Step 10: Decrypt
-        const decryptedCodes = xorDecrypt(encryptedData, key);
+        // Step 11: Decrypt with regular key
+        let decryptedCodes = xorDecrypt(encryptedData, key);
         
-        // Step 7: Convert back to text
+        // Step 12: If secret code was used, decrypt with secret code
+        if (hasSecretCode && secretCode) {
+            decryptedCodes = xorDecrypt(decryptedCodes, secretCode.trim());
+        }
+        
+        // Step 13: Convert back to text
         const decrypted = codeArrayToString(decryptedCodes);
         
         return decrypted;
