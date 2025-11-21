@@ -72,6 +72,9 @@ function showNotification(message, type = 'info', duration = 4000) {
 // ==================== PRO FEATURES ====================
 
 // User Management (using localStorage)
+// Master account mobile number
+const MASTER_ACCOUNT_MOBILE = '9944996715';
+
 function getUserData() {
     const userData = localStorage.getItem('secretChatUser');
     return userData ? JSON.parse(userData) : null;
@@ -79,6 +82,10 @@ function getUserData() {
 
 function saveUserData(userData) {
     localStorage.setItem('secretChatUser', JSON.stringify(userData));
+}
+
+function isMasterAccount(mobile) {
+    return mobile === MASTER_ACCOUNT_MOBILE;
 }
 
 function getCredits() {
@@ -92,6 +99,13 @@ function deductCredit() {
         user.credits--;
         saveUserData(user);
         updateCreditsDisplay();
+        // Update account modal if it's open
+        if (accountModal && accountModal.style.display === 'flex') {
+            const accountCredits = document.getElementById('accountCredits');
+            if (accountCredits) {
+                accountCredits.textContent = user.credits;
+            }
+        }
         return true;
     }
     return false;
@@ -103,44 +117,104 @@ function addCredits(amount) {
         user.credits += amount;
         saveUserData(user);
         updateCreditsDisplay();
+        // Update account modal if it's open
+        if (accountModal && accountModal.style.display === 'flex') {
+            const accountCredits = document.getElementById('accountCredits');
+            if (accountCredits) {
+                accountCredits.textContent = user.credits;
+            }
+        }
     }
 }
 
 function isProUser() {
     const user = getUserData();
-    return user !== null;
+    // Only master account (9944996715) is a Pro user
+    return user !== null && isMasterAccount(user.mobile);
 }
 
 function updateCreditsDisplay() {
     const creditsDisplay = document.getElementById('creditsDisplay');
     const creditsCount = document.getElementById('creditsCount');
+    const accountBtn = document.getElementById('accountBtn');
+    const proBtn = document.getElementById('proBtn');
+    const secretCodeOption = document.getElementById('secretCodeOption');
     const user = getUserData();
     
-    if (user) {
-        creditsDisplay.style.display = 'flex';
-        creditsCount.textContent = user.credits;
+    // Check if user is Pro (master account only)
+    const isPro = isProUser();
+    
+    if (isPro && user) {
+        // Show credits display and account button for Pro users (master account only)
+        if (creditsDisplay) {
+            creditsDisplay.style.display = 'flex';
+            creditsDisplay.style.visibility = 'visible';
+        }
+        if (creditsCount) creditsCount.textContent = user.credits;
+        if (accountBtn) {
+            accountBtn.style.display = 'flex';
+            accountBtn.style.visibility = 'visible';
+        }
+        // Hide Pro button for logged-in users
+        if (proBtn) {
+            proBtn.style.display = 'none';
+            proBtn.style.visibility = 'hidden';
+        }
+        // Show secret code option only if user has credits
+        if (secretCodeOption) {
+            if (user.credits > 0) {
+                secretCodeOption.style.display = 'block';
+                secretCodeOption.style.visibility = 'visible';
+            } else {
+                secretCodeOption.style.display = 'none';
+                secretCodeOption.style.visibility = 'hidden';
+            }
+        }
     } else {
-        creditsDisplay.style.display = 'none';
+        // Hide credits display and account button for free users
+        if (creditsDisplay) {
+            creditsDisplay.style.display = 'none';
+            creditsDisplay.style.visibility = 'hidden';
+        }
+        if (accountBtn) {
+            accountBtn.style.display = 'none';
+            accountBtn.style.visibility = 'hidden';
+        }
+        // Show Pro button for free users
+        if (proBtn) {
+            proBtn.style.display = 'flex';
+            proBtn.style.visibility = 'visible';
+        }
+        // Hide secret code option for free users
+        if (secretCodeOption) {
+            secretCodeOption.style.display = 'none';
+            secretCodeOption.style.visibility = 'hidden';
+        }
     }
 }
 
 // Pro Button Handler
 const proBtn = document.getElementById('proBtn');
+const accountBtn = document.getElementById('accountBtn');
 const pricingModal = document.getElementById('pricingModal');
 const paymentModal = document.getElementById('paymentModal');
 const authModal = document.getElementById('authModal');
 const secretCodeModal = document.getElementById('secretCodeModal');
+const accountModal = document.getElementById('accountModal');
+
+// Valid coupon code
+const VALID_COUPON_CODE = 'VIKRAM';
 
 // Logout function
 function logout() {
-    localStorage.removeItem('proUser');
-    updateCreditsDisplay();
-    showNotification('You have been logged out successfully', 'success');
-    // Hide secret code option if visible
-    const secretCodeOption = document.getElementById('secretCodeOption');
-    if (secretCodeOption) {
-        secretCodeOption.style.display = 'none';
+    // Remove user data - use the correct key
+    localStorage.removeItem('secretChatUser');
+    
+    // Close account modal if open
+    if (accountModal) {
+        accountModal.style.display = 'none';
     }
+    
     // Clear any secret code input
     const secretCodeField = document.getElementById('secretCodeField');
     if (secretCodeField) {
@@ -154,25 +228,134 @@ function logout() {
     if (secretCodeInput) {
         secretCodeInput.style.display = 'none';
     }
+    
+    // Force hide all Pro features immediately
+    const creditsDisplayEl = document.getElementById('creditsDisplay');
+    const accountBtnEl = document.getElementById('accountBtn');
+    const secretCodeOptionEl = document.getElementById('secretCodeOption');
+    const proBtnEl = document.getElementById('proBtn');
+    
+    // Hide Pro features with !important equivalent
+    if (creditsDisplayEl) {
+        creditsDisplayEl.style.display = 'none';
+        creditsDisplayEl.style.visibility = 'hidden';
+    }
+    if (accountBtnEl) {
+        accountBtnEl.style.display = 'none';
+        accountBtnEl.style.visibility = 'hidden';
+    }
+    if (secretCodeOptionEl) {
+        secretCodeOptionEl.style.display = 'none';
+        secretCodeOptionEl.style.visibility = 'hidden';
+    }
+    
+    // Show Pro button
+    if (proBtnEl) {
+        proBtnEl.style.display = 'flex';
+        proBtnEl.style.visibility = 'visible';
+    }
+    
+    // Update UI to ensure everything is properly hidden
+    updateCreditsDisplay();
+    
+    // Force update UI to hide secret code option
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        updateUI();
+    }
+    
+    // Final check to ensure everything is hidden - multiple attempts
+    setTimeout(() => {
+        if (creditsDisplayEl) {
+            creditsDisplayEl.style.display = 'none';
+            creditsDisplayEl.style.visibility = 'hidden';
+        }
+        if (accountBtnEl) {
+            accountBtnEl.style.display = 'none';
+            accountBtnEl.style.visibility = 'hidden';
+        }
+        if (secretCodeOptionEl) {
+            secretCodeOptionEl.style.display = 'none';
+            secretCodeOptionEl.style.visibility = 'hidden';
+        }
+        if (proBtnEl) {
+            proBtnEl.style.display = 'flex';
+            proBtnEl.style.visibility = 'visible';
+        }
+        updateCreditsDisplay();
+        updateUI();
+    }, 100);
+    
+    setTimeout(() => {
+        updateCreditsDisplay();
+        updateUI();
+    }, 300);
+    
+    showNotification('You have been logged out successfully', 'success');
 }
 
+// Show Account Modal
+function showAccountModal() {
+    const user = getUserData();
+    if (!user) {
+        showNotification('You are not logged in', 'error');
+        return;
+    }
+    
+    const accountMobile = document.getElementById('accountMobile');
+    const accountCredits = document.getElementById('accountCredits');
+    
+    if (accountMobile) {
+        accountMobile.textContent = user.mobile;
+    }
+    if (accountCredits) {
+        accountCredits.textContent = user.credits;
+    }
+    
+    accountModal.style.display = 'flex';
+}
+
+// Pro Button Handler - only for non-Pro users
 proBtn.addEventListener('click', () => {
-    if (isProUser()) {
-        // Show account info with logout option
-        const credits = getCredits();
-        const user = getUserData();
-        const shouldLogout = confirm(`Account Information:\n\nMobile: ${user.mobile}\nCredits: ${credits}\n\nDo you want to log out?`);
-        if (shouldLogout) {
-            logout();
-        }
-    } else {
+    if (!isProUser()) {
         pricingModal.style.display = 'flex';
     }
+});
+
+// Account Button Handler - for Pro users
+accountBtn.addEventListener('click', () => {
+    showAccountModal();
+});
+
+// Credits Display Handler - clickable to buy more credits
+const creditsDisplay = document.getElementById('creditsDisplay');
+creditsDisplay.addEventListener('click', () => {
+    if (isProUser()) {
+        pricingModal.style.display = 'flex';
+    }
+});
+
+// Account Modal Handlers
+document.getElementById('closeAccountModal').addEventListener('click', () => {
+    accountModal.style.display = 'none';
+});
+
+document.getElementById('buyMoreCreditsBtn').addEventListener('click', () => {
+    accountModal.style.display = 'none';
+    pricingModal.style.display = 'flex';
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    logout();
 });
 
 // Close modals
 document.getElementById('closePricingModal').addEventListener('click', () => {
     pricingModal.style.display = 'none';
+    // Reset coupon applied flag when closing pricing modal
+    couponApplied = false;
+    // Reset prices to original when closing
+    resetPricingToOriginal();
 });
 
 document.getElementById('closePaymentModal').addEventListener('click', () => {
@@ -187,13 +370,144 @@ document.getElementById('closeSecretCodeModal').addEventListener('click', () => 
     secretCodeModal.style.display = 'none';
 });
 
-// Close modals on outside click
-[pricingModal, paymentModal, authModal, secretCodeModal].forEach(modal => {
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.style.display = 'none';
+// Coupon Modal Handlers
+const couponModal = document.getElementById('couponModal');
+const closeCouponModalBtn = document.getElementById('closeCouponModal');
+if (closeCouponModalBtn && couponModal) {
+    closeCouponModalBtn.addEventListener('click', () => {
+        couponModal.style.display = 'none';
+        const couponCodeInput = document.getElementById('couponCode');
+        if (couponCodeInput) {
+            couponCodeInput.value = '';
         }
     });
+}
+
+// Function to handle coupon code submission
+function handleCouponCode() {
+    const couponCodeInput = document.getElementById('couponCode');
+    if (!couponCodeInput) {
+        console.error('Coupon code input not found');
+        showNotification('Coupon code input not found', 'error');
+        return;
+    }
+    
+    const couponCode = couponCodeInput.value.trim().toUpperCase();
+    console.log('Coupon code entered:', couponCode);
+    
+    if (!couponCode) {
+        showNotification('Please enter a coupon code', 'error');
+        return;
+    }
+    
+    // Validate coupon code
+    const validCoupon = 'VIKRAM';
+    if (couponCode === validCoupon) {
+        console.log('Valid coupon code - updating prices');
+        // Valid coupon - update pricing cards to show discounted prices
+        updatePricingWithDiscount();
+        couponApplied = true;
+        if (couponModal) {
+            couponModal.style.display = 'none';
+        }
+        couponCodeInput.value = '';
+        // Reopen pricing modal with discounted prices
+        setTimeout(() => {
+            if (pricingModal) {
+                pricingModal.style.display = 'flex';
+            }
+        }, 100);
+    } else {
+        console.log('Invalid coupon code:', couponCode);
+        // Invalid coupon - show error
+        showNotification("Sorry! You're not welcome to the club", 'error');
+        if (couponModal) {
+            couponModal.style.display = 'none';
+        }
+        couponCodeInput.value = '';
+    }
+}
+
+// Apply Coupon Button - use event delegation
+document.addEventListener('click', (e) => {
+    // Handle clicks on button or its child elements
+    const applyBtn = e.target.closest('#applyCouponBtn') || (e.target.id === 'applyCouponBtn' ? e.target : null);
+    if (applyBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCouponCode();
+    }
+});
+
+// Function to update pricing cards with discounted prices
+function updatePricingWithDiscount() {
+    const pricingCards = document.querySelectorAll('.pricing-card');
+    pricingCards.forEach(card => {
+        const discountPrice = parseInt(card.dataset.discountPrice);
+        const priceElement = card.querySelector('.price');
+        if (priceElement && discountPrice) {
+            // Format the discounted price with commas
+            const formattedPrice = formatIndianCurrency(discountPrice);
+            priceElement.textContent = `₹${formattedPrice}`;
+            // Store original price in a separate attribute before updating
+            if (!card.dataset.originalPrice) {
+                card.dataset.originalPrice = card.dataset.price;
+            }
+            // Update the data-price to discount price for payment processing
+            card.dataset.price = discountPrice;
+        }
+    });
+}
+
+// Function to format Indian currency
+function formatIndianCurrency(amount) {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Function to reset pricing cards to original prices
+function resetPricingToOriginal() {
+    const pricingCards = document.querySelectorAll('.pricing-card');
+    pricingCards.forEach(card => {
+        // Get original high price - use originalPrice if set, otherwise use data-price
+        const originalPrice = card.dataset.originalPrice || card.getAttribute('data-price');
+        const priceElement = card.querySelector('.price');
+        if (priceElement && originalPrice) {
+            // Parse and format the original price
+            const priceNum = parseInt(originalPrice);
+            const formattedPrice = formatIndianCurrency(priceNum);
+            priceElement.textContent = `₹${formattedPrice}`;
+            // Restore data-price to original
+            card.dataset.price = originalPrice;
+            // Clear the originalPrice marker
+            delete card.dataset.originalPrice;
+        }
+    });
+}
+
+// Track if coupon has been applied
+let couponApplied = false;
+
+// Allow Enter key to submit coupon - use event delegation
+document.addEventListener('keypress', (e) => {
+    if (e.target && e.target.id === 'couponCode' && e.key === 'Enter') {
+        e.preventDefault();
+        handleCouponCode();
+    }
+});
+
+// Close modals on outside click
+[pricingModal, paymentModal, authModal, secretCodeModal, accountModal, couponModal].forEach(modal => {
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                // Clear coupon code if closing coupon modal
+                if (modal === couponModal) {
+                    document.getElementById('couponCode').value = '';
+                }
+            }
+        });
+    }
 });
 
 // Pricing card selection - use event delegation
@@ -212,11 +526,37 @@ document.addEventListener('click', (e) => {
             console.log('Pricing card clicked:', credits, price);
             
             if (credits && price && !isNaN(credits) && !isNaN(price)) {
-                pricingModal.style.display = 'none';
-                // Small delay to ensure modal closes before opening payment modal
-                setTimeout(() => {
-                    showPaymentModal(credits, price);
-                }, 100);
+                console.log('Pricing card selected - credits:', credits, 'price:', price, 'couponApplied:', couponApplied);
+                
+                // Check if coupon has been applied
+                if (couponApplied) {
+                    // Coupon already applied - go directly to payment with discounted price
+                    console.log('Coupon applied - showing payment modal with price:', price);
+                    pricingModal.style.display = 'none';
+                    setTimeout(() => {
+                        showPaymentModal(credits, price);
+                    }, 150);
+                } else {
+                    // No coupon applied yet - show coupon modal
+                    const originalPrice = parseInt(card.getAttribute('data-price')) || price;
+                    const discountPrice = parseInt(card.dataset.discountPrice) || price;
+                    
+                    console.log('No coupon applied - showing coupon modal');
+                    couponModal.dataset.credits = credits;
+                    couponModal.dataset.price = originalPrice;
+                    couponModal.dataset.discountPrice = discountPrice;
+                    
+                    pricingModal.style.display = 'none';
+                    setTimeout(() => {
+                        if (couponModal) {
+                            couponModal.style.display = 'flex';
+                            const couponInput = document.getElementById('couponCode');
+                            if (couponInput) {
+                                couponInput.focus();
+                            }
+                        }
+                    }, 100);
+                }
             } else {
                 console.error('Invalid credits or price:', credits, price);
                 showNotification('Invalid pricing data', 'error');
@@ -229,6 +569,12 @@ document.addEventListener('click', (e) => {
 function showPaymentModal(credits, amount) {
     console.log('showPaymentModal called with:', credits, amount);
     
+    if (!paymentModal) {
+        console.error('Payment modal not found');
+        showNotification('Payment modal not found', 'error');
+        return;
+    }
+    
     const paymentAmount = document.getElementById('paymentAmount');
     if (!paymentAmount) {
         console.error('Payment amount element not found');
@@ -236,7 +582,9 @@ function showPaymentModal(credits, amount) {
         return;
     }
     
-    paymentAmount.textContent = amount;
+    // Format amount for display
+    const formattedAmount = formatIndianCurrency(amount);
+    paymentAmount.textContent = formattedAmount;
     
     const upiId = 'vikibba1805-3@okaxis';
     const payeeName = 'Vikram';
@@ -248,12 +596,20 @@ function showPaymentModal(credits, amount) {
     paymentModal.dataset.credits = credits;
     paymentModal.dataset.amount = amount;
     
-    // Show modal first
+    // Ensure modal is visible
     paymentModal.style.display = 'flex';
+    paymentModal.style.visibility = 'visible';
+    
+    // Ensure QR code container is visible
+    const qrContainer = document.querySelector('.qr-code-container');
+    if (qrContainer) {
+        qrContainer.style.display = 'flex';
+        qrContainer.style.visibility = 'visible';
+    }
     
     // Wait for modal to be visible and library to be ready
     let retryCount = 0;
-    const maxRetries = 15;
+    const maxRetries = 20;
     
     const generateQR = () => {
         const qrCanvas = document.getElementById('qrCode');
@@ -263,24 +619,18 @@ function showPaymentModal(credits, amount) {
         }
         
         // Check if QRCode library is loaded
-        if (typeof QRCode === 'undefined') {
+        if (typeof QRCode === 'undefined' || typeof QRCode.toCanvas !== 'function') {
             retryCount++;
             if (retryCount < maxRetries) {
                 console.log(`QRCode library not loaded yet, retrying... (${retryCount}/${maxRetries})`);
-                setTimeout(generateQR, 200);
+                setTimeout(generateQR, 250);
                 return;
             } else {
                 console.error('QRCode library failed to load after multiple retries');
-                showNotification('QR code library not loaded. Please refresh the page.', 'error');
+                // Fallback: Use QR code API service
+                generateQRCodeFallback(upiUrl, qrCanvas);
                 return;
             }
-        }
-        
-        // Check if toCanvas method exists
-        if (typeof QRCode.toCanvas !== 'function') {
-            console.error('QRCode.toCanvas is not a function. Available methods:', Object.keys(QRCode));
-            showNotification('QR code library version mismatch. Please refresh the page.', 'error');
-            return;
         }
         
         // Clear canvas
@@ -302,19 +652,34 @@ function showPaymentModal(credits, amount) {
             }, (error) => {
                 if (error) {
                     console.error('QR Code generation error:', error);
-                    showNotification('Failed to generate QR code. Please use the UPI ID below.', 'error');
+                    // Try fallback
+                    generateQRCodeFallback(upiUrl, qrCanvas);
                 } else {
                     console.log('QR code generated successfully');
                 }
             });
         } catch (error) {
             console.error('QR Code generation exception:', error);
-            showNotification('Failed to generate QR code. Please use the UPI ID below.', 'error');
+            // Try fallback
+            generateQRCodeFallback(upiUrl, qrCanvas);
         }
     };
     
     // Start generation after modal is visible
-    setTimeout(generateQR, 500);
+    setTimeout(generateQR, 300);
+}
+
+// Fallback QR code generation using API
+function generateQRCodeFallback(upiUrl, canvas) {
+    const container = canvas ? canvas.parentElement : document.getElementById('qrCode')?.parentElement;
+    if (container) {
+        // Use QR code API service as fallback
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(upiUrl)}`;
+        container.innerHTML = `<img src="${qrApiUrl}" alt="QR Code" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;">`;
+        console.log('Using QR code API fallback');
+    } else {
+        console.error('QR code container not found for fallback');
+    }
 }
 
 // Payment Done Handler
@@ -328,13 +693,9 @@ function showAuthModal() {
     const authModalTitle = document.getElementById('authModalTitle');
     const authDescription = document.getElementById('authDescription');
     
-    if (isProUser()) {
-        authModalTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
-        authDescription.textContent = 'Enter your mobile number to access your Pro account';
-    } else {
-        authModalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
-        authDescription.textContent = 'Enter your mobile number to create your Pro account';
-    }
+    // Always show login for Pro (only master account can login)
+    authModalTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login to Pro Account';
+    authDescription.textContent = 'Enter the master account mobile number to access Pro features';
     
     authModal.style.display = 'flex';
 }
@@ -349,15 +710,21 @@ document.getElementById('submitAuthBtn').addEventListener('click', () => {
         return;
     }
     
+    // Check if it's the master account
+    if (!isMasterAccount(mobile)) {
+        showNotification('Access denied. Only master account can access Pro features.', 'error');
+        return;
+    }
+    
     const user = getUserData();
     const credits = parseInt(paymentModal.dataset.credits) || 0;
     
     if (user && user.mobile === mobile) {
-        // Existing user - add credits
+        // Existing master user - add credits
         addCredits(credits);
         showNotification(`Welcome back! ${credits} credits added to your account`, 'success');
     } else {
-        // New user - create account
+        // New master user - create account
         const newUser = {
             mobile: mobile,
             credits: credits,
@@ -369,12 +736,7 @@ document.getElementById('submitAuthBtn').addEventListener('click', () => {
     
     authModal.style.display = 'none';
     mobileInput.value = '';
-    updateCreditsDisplay();
-    
-    // Show secret code option if user has credits
-    if (getCredits() > 0) {
-        document.getElementById('secretCodeOption').style.display = 'block';
-    }
+    updateCreditsDisplay(); // This will handle showing/hiding secret code option based on user status
 });
 
 // Secret Code Option Toggle
@@ -399,7 +761,16 @@ useSecretCodeCheckbox.addEventListener('change', (e) => {
 });
 
 // Initialize credits display on load
-updateCreditsDisplay();
+// Clear any non-master account data on page load
+(function initialize() {
+    const user = getUserData();
+    if (user && !isMasterAccount(user.mobile)) {
+        // Clear non-master account data
+        localStorage.removeItem('secretChatUser');
+        console.log('Cleared non-master account data');
+    }
+    updateCreditsDisplay();
+})();
 
 // Smart Detection: Determine if text is encrypted or plain
 function detectTextType(text) {
@@ -417,7 +788,7 @@ function detectTextType(text) {
         
         // Check if secret code is required (returns object with requiresSecretCode flag)
         if (testDecrypt && typeof testDecrypt === 'object' && testDecrypt.requiresSecretCode) {
-            return 'encrypted'; // It's encrypted but requires secret code
+            return 'secret-encrypted'; // It's encrypted with secret code (Pro feature)
         }
         
         if (testDecrypt && typeof testDecrypt === 'string' && testDecrypt.length > 0 && testDecrypt.trim().length > 0) {
@@ -470,18 +841,22 @@ function updateUI() {
     // Show delete button
     deleteBtn.style.display = 'flex';
     
-    // Show secret code option for Pro users
+    // Show secret code option only for Pro users with credits
+    const secretCodeOption = document.getElementById('secretCodeOption');
     if (isProUser() && getCredits() > 0) {
         const textType = detectTextType(text);
         if (textType === 'plain') {
-            document.getElementById('secretCodeOption').style.display = 'block';
+            secretCodeOption.style.display = 'block';
         } else {
-            document.getElementById('secretCodeOption').style.display = 'none';
+            secretCodeOption.style.display = 'none';
             useSecretCodeCheckbox.checked = false;
             secretCodeInput.style.display = 'none';
         }
     } else {
-        document.getElementById('secretCodeOption').style.display = 'none';
+        // Hide secret code option for free users or users without credits
+        secretCodeOption.style.display = 'none';
+        useSecretCodeCheckbox.checked = false;
+        secretCodeInput.style.display = 'none';
     }
     
     // Detect text type
@@ -492,6 +867,19 @@ function updateUI() {
         inputStatus.className = 'input-status detected-encrypted';
         processBtnIcon.className = 'fas fa-unlock';
         processBtnText.textContent = 'Decrypt';
+    } else if (textType === 'secret-encrypted') {
+        // Check if user is Pro
+        if (isProUser() && getCredits() > 0) {
+            inputStatus.innerHTML = '<i class="fas fa-key"></i> Detected: Secret code encrypted - Pro account detected';
+            inputStatus.className = 'input-status detected-encrypted';
+            processBtnIcon.className = 'fas fa-key';
+            processBtnText.textContent = 'Decrypt';
+        } else {
+            inputStatus.innerHTML = '<i class="fas fa-crown"></i> Detected: Secret code encrypted - Pro account required to decrypt';
+            inputStatus.className = 'input-status detected-encrypted';
+            processBtnIcon.className = 'fas fa-crown';
+            processBtnText.textContent = 'Go Pro';
+        }
     } else if (textType === 'plain') {
         inputStatus.innerHTML = '<i class="fas fa-lock"></i> Detected: Plain text - will encrypt';
         inputStatus.className = 'input-status detected-plain';
@@ -518,12 +906,30 @@ function processMessage() {
     let result;
     let resultType;
     
+    // Handle "Go Pro" button click for secret-encrypted messages
+    if (textType === 'secret-encrypted' && (!isProUser() || getCredits() === 0)) {
+        showNotification('This message is encrypted with a secret code. Pro account required to decrypt.', 'error');
+        pricingModal.style.display = 'flex';
+        return;
+    }
+    
     if (textType === 'encrypted') {
         // Decrypt
         result = decryptText(text);
         
         // Check if secret code is required
         if (result && typeof result === 'object' && result.requiresSecretCode) {
+            // Check if user is Pro account
+            if (!isProUser() || getCredits() === 0) {
+                showNotification('This message is encrypted with a secret code. Pro account required to decrypt.', 'error');
+                pricingModal.style.display = 'flex';
+                return;
+            }
+            // Pro user - show secret code modal
+            const secretCodeModalDesc = document.getElementById('secretCodeModalDescription');
+            if (secretCodeModalDesc) {
+                secretCodeModalDesc.textContent = 'This message was encrypted with a secret code. Please enter the secret code to decrypt.';
+            }
             secretCodeModal.style.display = 'flex';
             secretCodeModal.dataset.encryptedCode = text;
             return;
@@ -540,6 +946,21 @@ function processMessage() {
         copyBtnIcon.className = 'fas fa-copy';
         copyBtn.title = 'Copy Message';
         showNotification('Message decrypted successfully!', 'success');
+    } else if (textType === 'secret-encrypted') {
+        // Message encrypted with secret code - Pro account required
+        if (!isProUser() || getCredits() === 0) {
+            showNotification('This message is encrypted with a secret code. Pro account required to decrypt.', 'error');
+            pricingModal.style.display = 'flex';
+            return;
+        }
+        // Pro user - show secret code modal
+        const secretCodeModalDesc = document.getElementById('secretCodeModalDescription');
+        if (secretCodeModalDesc) {
+            secretCodeModalDesc.textContent = 'This message was encrypted with a secret code. Please enter the secret code to decrypt.';
+        }
+        secretCodeModal.style.display = 'flex';
+        secretCodeModal.dataset.encryptedCode = text;
+        return;
     } else {
         // Encrypt
         const useSecretCode = useSecretCodeCheckbox.checked;
@@ -608,10 +1029,34 @@ document.getElementById('submitSecretCodeBtn').addEventListener('click', () => {
         return;
     }
     
+    // Check if user is Pro account before allowing decryption
+    if (!isProUser() || getCredits() === 0) {
+        showNotification('Pro account required to decrypt secret code encrypted messages.', 'error');
+        secretCodeModal.style.display = 'none';
+        pricingModal.style.display = 'flex';
+        return;
+    }
+    
     const result = decryptText(encryptedCode, secretCode);
     
     if (!result) {
         showNotification('Invalid secret code or corrupted message', 'error');
+        return;
+    }
+    
+    // Check if secret code was wrong
+    if (typeof result === 'object' && result.wrongSecretCode) {
+        showNotification('Invalid secret code. Access denied.', 'error');
+        // Show random encrypted output to prevent information leakage
+        outputContent.textContent = result.randomOutput;
+        outputLabel.textContent = 'Encrypted Code';
+        outputType.textContent = 'Encrypted';
+        outputType.className = 'output-type encrypted';
+        copyBtnIcon.className = 'fas fa-copy';
+        copyBtn.title = 'Copy Code';
+        outputGroup.style.display = 'block';
+        secretCodeModal.style.display = 'none';
+        document.getElementById('decryptSecretCode').value = '';
         return;
     }
     
@@ -901,9 +1346,15 @@ function encryptText(text, secretCode = null) {
         // Step 2: Convert text to code array (handles Unicode, emojis, etc.)
         let textCodes = stringToCodeArray(text);
         
-        // Step 2.5: If secret code is provided, encrypt with it first
+        // Step 2.5: If secret code is provided, encrypt with it first and add checksum
+        let secretCodeChecksum = 0;
         if (secretCode && secretCode.trim()) {
-            textCodes = xorEncrypt(textCodes, secretCode.trim());
+            const trimmedSecretCode = secretCode.trim();
+            // Calculate checksum of secret code for verification
+            secretCodeChecksum = trimmedSecretCode.split('').reduce((sum, char, idx) => {
+                return sum + char.charCodeAt(0) * (idx + 1);
+            }, trimmedSecretCode.length);
+            textCodes = xorEncrypt(textCodes, trimmedSecretCode);
         }
         
         // Step 3: Encrypt using XOR with the random key
@@ -923,12 +1374,21 @@ function encryptText(text, secretCode = null) {
         
         // Step 6: Embed the key (key length, checksum, obfuscated data, key)
         // Add flag: 'S' for secret code, 'N' for normal
+        // If secret code is used, embed its checksum (5 digits) after the flag
         const secretFlag = secretCode && secretCode.trim() ? 'S' : 'N';
         const keyChecksum = key.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
         const keyLength = key.length;
         const keyLenEncoded = encodeNumber(keyLength).padStart(2, '0');
         const checksumEncoded = encodeNumber(keyChecksum).padStart(3, '0');
-        const embedded = `${secretFlag}${keyLenEncoded}${checksumEncoded}${obfuscatedData}${key}`;
+        
+        // If secret code is used, add its checksum (5 digits) after the flag
+        const secretCodeChecksumEncoded = secretCodeChecksum > 0 
+            ? encodeNumber(secretCodeChecksum).padStart(5, '0') 
+            : '';
+        
+        const embedded = secretCodeChecksum > 0
+            ? `${secretFlag}${secretCodeChecksumEncoded}${keyLenEncoded}${checksumEncoded}${obfuscatedData}${key}`
+            : `${secretFlag}${keyLenEncoded}${checksumEncoded}${obfuscatedData}${key}`;
         
         // Step 7: Add random padding
         const prefixPadding = generateRandomChars(Math.floor(Math.random() * 5) + 4);
@@ -1011,10 +1471,49 @@ function decryptText(encryptedCode, secretCode = null) {
             return { requiresSecretCode: true };
         }
         
-        // Step 5: Extract key length (next 2 alphanumeric chars after flag)
+        // Step 4.5: If secret code is used, extract and verify its checksum
+        let secretCodeChecksum = 0;
+        let dataStartOffset = 1; // Default: after flag
+        
+        if (hasSecretCode && secretCode) {
+            // Extract secret code checksum (5 digits after flag)
+            let secretChecksumStr = '';
+            let alphanumericCount = 0;
+            for (let k = 1; k < withoutPadding.length && secretChecksumStr.length < 5; k++) {
+                if (/[0-9A-Z]/.test(withoutPadding[k])) {
+                    secretChecksumStr += withoutPadding[k];
+                    alphanumericCount++;
+                }
+            }
+            
+            if (secretChecksumStr.length < 5) {
+                throw new Error('Invalid format - secret code checksum missing');
+            }
+            
+            secretCodeChecksum = decodeNumber(secretChecksumStr);
+            
+            // Verify secret code checksum
+            const trimmedSecretCode = secretCode.trim();
+            const expectedChecksum = trimmedSecretCode.split('').reduce((sum, char, idx) => {
+                return sum + char.charCodeAt(0) * (idx + 1);
+            }, trimmedSecretCode.length);
+            
+            if (secretCodeChecksum !== expectedChecksum) {
+                // Wrong secret code - return special flag and random encrypted-looking data
+                return { 
+                    wrongSecretCode: true, 
+                    randomOutput: generateRandomEncryptedOutput(encryptedCode.length) 
+                };
+            }
+            
+            dataStartOffset = 6; // flag (1) + secret checksum (5)
+        }
+        
+        // Step 5: Extract key length (next 2 alphanumeric chars after flag/secret checksum)
         let keyLenStr = '';
         let alphanumericCount = 0;
-        for (let k = 1; k < withoutPadding.length && keyLenStr.length < 2; k++) {
+        let startIndex = dataStartOffset;
+        for (let k = startIndex; k < withoutPadding.length && keyLenStr.length < 2; k++) {
             if (/[0-9A-Z]/.test(withoutPadding[k])) {
                 keyLenStr += withoutPadding[k];
             }
@@ -1029,12 +1528,10 @@ function decryptText(encryptedCode, secretCode = null) {
         // Step 6: Extract checksum (next 3 alphanumeric chars after keyLen)
         let checksumStr = '';
         alphanumericCount = 0;
-        for (let k = 1; k < withoutPadding.length && checksumStr.length < 3; k++) {
+        let checksumStartIndex = startIndex + 2; // After flag/secret checksum + keyLen
+        for (let k = checksumStartIndex; k < withoutPadding.length && checksumStr.length < 3; k++) {
             if (/[0-9A-Z]/.test(withoutPadding[k])) {
-                alphanumericCount++;
-                if (alphanumericCount > 2) { // After flag (1) + keyLen (2)
-                    checksumStr += withoutPadding[k];
-                }
+                checksumStr += withoutPadding[k];
             }
         }
         
@@ -1053,14 +1550,16 @@ function decryptText(encryptedCode, secretCode = null) {
         }
         
         // Step 8: Extract data part (between checksum and key)
-        // Format: [flag(1)][keyLen(2)][checksum(3)][data with obfuscation][key]
-        // Find where data starts (after 6 chars: 1 flag + 2 keyLen + 3 checksum)
+        // Format with secret code: [flag(1)][secretChecksum(5)][keyLen(2)][checksum(3)][data][key]
+        // Format without: [flag(1)][keyLen(2)][checksum(3)][data][key]
+        // Find where data starts
         let dataStartIndex = 0;
         alphanumericCount = 0;
+        const expectedAlphanumericBeforeData = hasSecretCode ? 11 : 6; // flag + secretChecksum(5) + keyLen(2) + checksum(3) OR flag + keyLen(2) + checksum(3)
         for (let k = 0; k < withoutPadding.length; k++) {
             if (/[0-9A-Z]/.test(withoutPadding[k])) {
                 alphanumericCount++;
-                if (alphanumericCount === 6) { // flag + keyLen + checksum
+                if (alphanumericCount === expectedAlphanumericBeforeData) {
                     dataStartIndex = k + 1;
                     break;
                 }
@@ -1108,9 +1607,46 @@ function decryptText(encryptedCode, secretCode = null) {
         return decrypted;
     } catch (error) {
         console.error('Decryption error:', error);
+        // If secret code was required but wrong, return random encrypted output
+        if (hasSecretCode && secretCode) {
+            return { 
+                wrongSecretCode: true, 
+                randomOutput: generateRandomEncryptedOutput(encryptedCode.length) 
+            };
+        }
         // Try old format as fallback
         return decryptOldFormat(encryptedCode);
     }
+}
+
+// Generate random encrypted-looking output when secret code is wrong
+function generateRandomEncryptedOutput(targetLength) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789|:;~!@#$%^&*()_+-=[]{}';
+    const separators = ['|', ':', ';', '~', '!', '@', '#', '$'];
+    let output = '';
+    
+    // Generate random alphanumeric strings separated by random separators
+    const minLength = Math.max(50, targetLength - 20);
+    const maxLength = targetLength + 20;
+    const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
+    
+    let currentLength = 0;
+    while (currentLength < length) {
+        // Add random alphanumeric chunk
+        const chunkLength = Math.floor(Math.random() * 8) + 3;
+        for (let i = 0; i < chunkLength && currentLength < length; i++) {
+            output += chars[Math.floor(Math.random() * chars.length)];
+            currentLength++;
+        }
+        
+        // Add separator if not at end
+        if (currentLength < length) {
+            output += separators[Math.floor(Math.random() * separators.length)];
+            currentLength++;
+        }
+    }
+    
+    return output;
 }
 
 // Fallback for old format (backward compatibility)

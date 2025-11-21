@@ -18,6 +18,9 @@
                         <i class="fas fa-coins"></i>
                         <span id="creditsCount">0</span> credits
                     </div>
+                    <button class="account-btn" id="accountBtn" aria-label="Account" style="display: none;">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
                     <button class="pro-btn" id="proBtn" aria-label="Pro">
                         <i class="fas fa-crown"></i> Pro
                     </button>
@@ -107,38 +110,60 @@
             </div>
             <div class="modal-body">
                 <div class="pricing-grid">
-                    <div class="pricing-card" data-credits="1" data-price="45">
+                    <div class="pricing-card" data-credits="1" data-price="45000" data-discount-price="45">
                         <div class="pricing-header">
                             <h3>1 Credit</h3>
-                            <div class="price">₹45</div>
+                            <div class="price">₹45,000</div>
                         </div>
                         <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
-                    <div class="pricing-card" data-credits="10" data-price="400">
+                    <div class="pricing-card" data-credits="10" data-price="400000" data-discount-price="400">
                         <div class="pricing-header">
                             <h3>10 Credits</h3>
-                            <div class="price">₹400</div>
-                            <div class="savings">Save ₹50</div>
+                            <div class="price">₹4,00,000</div>
                         </div>
                         <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
-                    <div class="pricing-card featured" data-credits="50" data-price="2000">
+                    <div class="pricing-card featured" data-credits="50" data-price="2000000" data-discount-price="2000">
                         <div class="pricing-badge">Popular</div>
                         <div class="pricing-header">
                             <h3>50 Credits</h3>
-                            <div class="price">₹2000</div>
-                            <div class="savings">Save ₹250</div>
+                            <div class="price">₹20,00,000</div>
                         </div>
                         <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
-                    <div class="pricing-card" data-credits="100" data-price="4000">
+                    <div class="pricing-card" data-credits="100" data-price="4000000" data-discount-price="4000">
                         <div class="pricing-header">
                             <h3>100 Credits</h3>
-                            <div class="price">₹4000</div>
-                            <div class="savings">Save ₹500</div>
+                            <div class="price">₹40,00,000</div>
                         </div>
                         <button class="btn btn-primary select-plan"><span>Select</span></button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coupon Code Modal -->
+    <div class="modal" id="couponModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-ticket-alt"></i> Enter Coupon Code</h2>
+                <button class="modal-close" id="closeCouponModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-form">
+                    <p>Enter your coupon code to unlock special pricing</p>
+                    <div class="input-group">
+                        <label for="couponCode">Coupon Code</label>
+                        <input type="text" id="couponCode" class="text-input" placeholder="Enter coupon code" style="text-transform: uppercase;">
+                    </div>
+                    <button class="btn btn-primary" id="applyCouponBtn">
+                        <i class="fas fa-check"></i>
+                        <span>Apply Coupon</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -212,7 +237,7 @@
             </div>
             <div class="modal-body">
                 <div class="auth-form">
-                    <p>This message was encrypted with a secret code. Please enter the secret code to decrypt.</p>
+                    <p id="secretCodeModalDescription">This message was encrypted with a secret code. Please enter the secret code to decrypt.</p>
                     <div class="input-group">
                         <label for="decryptSecretCode">Secret Code</label>
                         <input type="text" id="decryptSecretCode" class="text-input" placeholder="Enter secret code">
@@ -226,7 +251,47 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- Account Modal -->
+    <div class="modal" id="accountModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-circle"></i> My Account</h2>
+                <button class="modal-close" id="closeAccountModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="account-info">
+                    <div class="account-detail">
+                        <div class="account-label">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Mobile Number</span>
+                        </div>
+                        <div class="account-value" id="accountMobile">-</div>
+                    </div>
+                    <div class="account-detail">
+                        <div class="account-label">
+                            <i class="fas fa-coins"></i>
+                            <span>Credits Remaining</span>
+                        </div>
+                        <div class="account-value credits-value" id="accountCredits">0</div>
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn btn-primary" id="buyMoreCreditsBtn">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Buy More Credits</span>
+                        </button>
+                        <button class="btn btn-secondary" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

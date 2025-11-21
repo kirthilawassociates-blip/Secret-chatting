@@ -89,10 +89,42 @@ body {
     font-size: 0.9rem;
     color: var(--text-primary);
     font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.credits-display:hover {
+    background: var(--bg-secondary);
+    transform: translateY(-1px);
 }
 
 .credits-display i {
     color: #f59e0b;
+}
+
+.account-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.account-btn:hover {
+    background: var(--bg-tertiary);
+    transform: translateY(-1px);
+}
+
+.account-btn i {
+    margin: 0;
 }
 
 .pro-btn {
@@ -657,23 +689,36 @@ body {
 }
 
 .checkbox-label {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     cursor: pointer;
     font-size: 0.9rem;
     color: var(--text-primary);
     width: 100%;
     margin: 0;
+    line-height: 1.4;
+    vertical-align: middle;
 }
 
 .checkbox-label input[type="checkbox"] {
     flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    vertical-align: middle;
+    position: relative;
+    top: 0;
 }
 
 .checkbox-label span {
     flex: 1;
     text-align: left;
+    line-height: 1.4;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -965,6 +1010,71 @@ body {
     font-weight: 600;
     letter-spacing: 0.3px;
     margin-top: 0.5rem;
+}
+
+/* Account Modal */
+.account-info {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.account-detail {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.account-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.account-label i {
+    color: var(--accent);
+}
+
+.account-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.account-value.credits-value {
+    color: #f59e0b;
+    font-size: 1.5rem;
+}
+
+.account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.account-actions .btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-secondary);
 }
 
 /* Responsive Design */
